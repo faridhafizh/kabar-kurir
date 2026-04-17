@@ -54,16 +54,6 @@ KabarKurir is a web application acting as a corporate news aggregator and an ind
    ```
    *Alternatively, you can run `composer dev` which will run all dev processes concurrently.*
 
-## GitHub Repo Info
-
-If you are hosting this project on GitHub, here are some suggestions for the repository settings:
-
-**Description:**
-> KabarKurir - Corporate news aggregator and independent package tracking platform for Indonesian logistics.
-
-**Topic Tags:**
-> `laravel`, `php`, `logistics`, `package-tracking`, `news-aggregator`, `indonesia`, `alpinejs`, `courier-tracking`
-
 ## License
 
 KabarKurir is built upon the Laravel framework, which is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
