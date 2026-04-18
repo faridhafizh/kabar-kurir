@@ -1,2 +1,27 @@
-vendor/
-node_modules/
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# Composer executable
+composer.phar
+
+# Storage & cache
+/storage/
+/bootstrap/cache/
+
+# Logs
+*.log
+
+# IDE (optional)
+/.idea/
+/.vscode/
+*.sublime-*
+
+# OS generated files
+.DS_Store
+Thumbs.db
