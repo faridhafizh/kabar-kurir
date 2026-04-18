@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>KabarKurir · {{ $title ?? 'Agregator Berita Ekspedisi' }}</title>
+    <title>KabarKurir · <?php echo e($title ?? 'Agregator Berita Ekspedisi'); ?></title>
 
     <!-- International Standard Fonts (Inter & Merriweather) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +15,7 @@
         rel="stylesheet">
 
     <!-- Custom Neutral Corporate CSS -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="<?php echo e(asset('css/app.css')); ?>">
 
     <!-- Alpine.js for lightweight UI state management -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -52,7 +52,7 @@
                     <span></span>
                     <span></span>
                 </button>
-                <a href="{{ route('home') }}" class="brand-logo">
+                <a href="<?php echo e(route('home')); ?>" class="brand-logo">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path
@@ -69,10 +69,10 @@
             <div class="nav-right">
                 <!-- Nav links (desktop) / Dropdown (mobile) -->
                 <div class="nav-links" id="navLinks">
-                    <a href="{{ route('home') }}"
-                        class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
-                    <a href="{{ route('news.index') }}"
-                        class="nav-link {{ request()->routeIs('news.*') ? 'active' : '' }}">Sorotan Berita</a>
+                    <a href="<?php echo e(route('home')); ?>"
+                        class="nav-link <?php echo e(request()->routeIs('home') ? 'active' : ''); ?>">Beranda</a>
+                    <a href="<?php echo e(route('news.index')); ?>"
+                        class="nav-link <?php echo e(request()->routeIs('news.*') ? 'active' : ''); ?>">Sorotan Berita</a>
                 </div>
 
                 <button @click="toggleTheme" class="theme-toggle" aria-label="Toggle Dark Mode">
@@ -97,12 +97,12 @@
         </nav>
 
         <main>
-            @yield('content')
+            <?php echo $__env->yieldContent('content'); ?>
         </main>
 
         <footer class="text-center text-muted"
             style="padding: 2rem 0; border-top: 1px solid var(--color-border); margin-top: auto;">
-            <p class="text-sm">&copy; {{ date('Y') }} KabarKurir. Data dilindungi dan diagregasi secara otomatis.</p>
+            <p class="text-sm">&copy; <?php echo e(date('Y')); ?> KabarKurir. Data dilindungi dan diagregasi secara otomatis.</p>
         </footer>
     </div>
 
@@ -130,7 +130,8 @@
         });
     </script>
 
-    @stack('scripts')
+    <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
 
 </html>
+<?php /**PATH D:\Websites\spx-news\resources\views/layouts/app.blade.php ENDPATH**/ ?>
