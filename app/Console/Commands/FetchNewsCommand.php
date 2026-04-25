@@ -3,7 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use App\Models\Article;
 use Carbon\Carbon;
 
@@ -21,47 +22,60 @@ class FetchNewsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Fetch latest news related to package delivery and logistics';
+    protected $description = 'Fetch latest news related to package delivery and logistics using Playwright';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $apiKey = env('NEWS_API_KEY');
-        
-        if (empty($apiKey)) {
-            $this->error('NEWS_API_KEY is not set in .env file.');
+        $this->info('Fetching news from Google News using Playwright...');
+
+        $process = new Process(['node', base_path('fetch-news.js')]);
+        $process->setTimeout(120);
+
+        try {
+            $process->mustRun();
+        } catch (ProcessFailedException $exception) {
+            $this->error('Failed to execute node script: ' . $exception->getMessage());
             return;
         }
 
-        $this->info('Fetching news from NewsAPI...');
+        $output = $process->getOutput();
+        $articles = json_decode($output, true);
 
-        // Query related to logistics, couriers, or shipping in Indonesia
-        $query = urlencode('kurir OR ekspedisi OR paket OR pengiriman');
-        
-        $response = Http::withOptions(['verify' => false])->get("https://newsapi.org/v2/everything?q={$query}&language=id&sortBy=publishedAt&apiKey={$apiKey}");
-
-        if ($response->failed()) {
-            $this->error('Failed to fetch news from API: ' . $response->body());
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->error('Failed to parse JSON output: ' . json_last_error_msg());
             return;
         }
 
-        $articles = $response->json('articles') ?? [];
+        if (!is_array($articles)) {
+            $this->error('Invalid format: output is not an array.');
+            return;
+        }
+
         $count = 0;
 
         foreach ($articles as $item) {
-            // Skip invalid or removed articles
-            if (empty($item['title']) || $item['title'] === '[Removed]') continue;
+            if (empty($item['title'])) continue;
+
+            $publishedAt = null;
+            if (!empty($item['published_at'])) {
+                try {
+                    $publishedAt = Carbon::parse($item['published_at'])->setTimezone('Asia/Jakarta');
+                } catch (\Exception $e) {
+                    // Ignore parsing errors for individual dates
+                }
+            }
 
             $article = Article::updateOrCreate(
                 ['url' => $item['url']],
                 [
-                    'source' => $item['source']['name'] ?? 'Unknown Source',
+                    'source' => $item['source'] ?? 'Unknown Source',
                     'title' => $item['title'],
-                    'description' => $item['description'],
-                    'content' => $item['content'],
-                    'published_at' => Carbon::parse($item['publishedAt'])->setTimezone('Asia/Jakarta'),
+                    'description' => null, // No description available from this scraper
+                    'content' => null,     // No content available from this scraper
+                    'published_at' => $publishedAt,
                 ]
             );
 
