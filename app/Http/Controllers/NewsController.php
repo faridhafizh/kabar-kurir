@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Article;
+use Illuminate\Support\Facades\Cache;
 
 class NewsController extends Controller
 {
     public function welcome()
     {
-        $articles = Article::orderBy('published_at', 'desc')->take(3)->get();
+        // Cache the latest articles for 1 hour to reduce database queries on the homepage
+        $articles = Cache::remember('welcome_articles', 3600, function () {
+            return Article::orderBy('published_at', 'desc')->take(3)->get();
+        });
         return view('welcome', compact('articles'));
     }
 
@@ -30,7 +34,10 @@ class NewsController extends Controller
 
     public function show($id)
     {
-        $article = Article::findOrFail($id);
+        // Cache individual article for 1 day as they rarely change after being published
+        $article = Cache::remember("article_{$id}", 86400, function () use ($id) {
+            return Article::findOrFail($id);
+        });
         return view('news.show', compact('article'));
     }
 }

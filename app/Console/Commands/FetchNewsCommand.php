@@ -84,6 +84,10 @@ class FetchNewsCommand extends Command
             }
         }
 
+        if ($count > 0) {
+            \Illuminate\Support\Facades\Cache::forget('welcome_articles');
+        }
+
         $this->info("Successfully fetched and added {$count} new articles.");
     }
 }
