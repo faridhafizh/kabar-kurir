@@ -23,7 +23,10 @@ class NewsController extends Controller
 
     public function index(Request $request)
     {
-        $query = Article::orderBy('published_at', 'desc');
+        // ⚡ Bolt Optimization: Only select necessary columns for the index view
+        // to avoid loading the large 'content' longText field into memory for every article.
+        $query = Article::select(['id', 'title', 'source', 'description', 'published_at'])
+            ->orderBy('published_at', 'desc');
         
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
