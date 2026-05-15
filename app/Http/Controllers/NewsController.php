@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use App\Models\Article;
 
 class NewsController extends Controller
 {
@@ -18,6 +18,7 @@ class NewsController extends Controller
                 ->take(3)
                 ->get();
         });
+
         return view('welcome', compact('articles'));
     }
 
@@ -27,21 +28,26 @@ class NewsController extends Controller
         // to avoid loading the large 'content' longText field into memory for every article.
         $query = Article::select(['id', 'title', 'source', 'description', 'published_at'])
             ->orderBy('published_at', 'desc');
-        
+
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where('title', 'like', "%{$search}%")
-                  ->orWhere('source', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                ->orWhere('source', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%");
         }
 
         $articles = $query->paginate(10);
+
         return view('news.index', compact('articles'));
     }
 
     public function show($id)
     {
-        $article = Article::findOrFail($id);
+        // ⚡ Bolt Optimization: Cache single article queries to avoid DB hits on popular articles.
+        $article = Cache::remember("article_{$id}", 3600, function () use ($id) {
+            return Article::findOrFail($id);
+        });
+
         return view('news.show', compact('article'));
     }
 }
