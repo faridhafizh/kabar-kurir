@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\TrackingController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', [NewsController::class, 'welcome'])->name('home');
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');
