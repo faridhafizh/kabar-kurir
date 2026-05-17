@@ -2,11 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 use App\Models\Article;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 class FetchNewsCommand extends Command
 {
@@ -37,7 +38,8 @@ class FetchNewsCommand extends Command
         try {
             $process->mustRun();
         } catch (ProcessFailedException $exception) {
-            $this->error('Failed to execute node script: ' . $exception->getMessage());
+            $this->error('Failed to execute node script: '.$exception->getMessage());
+
             return;
         }
 
@@ -45,22 +47,26 @@ class FetchNewsCommand extends Command
         $articles = json_decode($output, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->error('Failed to parse JSON output: ' . json_last_error_msg());
+            $this->error('Failed to parse JSON output: '.json_last_error_msg());
+
             return;
         }
 
-        if (!is_array($articles)) {
+        if (! is_array($articles)) {
             $this->error('Invalid format: output is not an array.');
+
             return;
         }
 
         $count = 0;
 
         foreach ($articles as $item) {
-            if (empty($item['title'])) continue;
+            if (empty($item['title'])) {
+                continue;
+            }
 
             $publishedAt = null;
-            if (!empty($item['published_at'])) {
+            if (! empty($item['published_at'])) {
                 try {
                     $publishedAt = Carbon::parse($item['published_at'])->setTimezone('Asia/Jakarta');
                 } catch (\Exception $e) {
@@ -81,11 +87,13 @@ class FetchNewsCommand extends Command
 
             if ($article->wasRecentlyCreated) {
                 $count++;
+            } elseif ($article->wasChanged()) {
+                Cache::forget("article_{$article->id}");
             }
         }
 
         if ($count > 0) {
-            \Illuminate\Support\Facades\Cache::forget('welcome_articles');
+            Cache::forget('welcome_articles');
         }
 
         $this->info("Successfully fetched and added {$count} new articles.");

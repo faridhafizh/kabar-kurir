@@ -488,3 +488,12 @@
 #69 /app/vendor/phpunit/phpunit/phpunit(104): PHPUnit\\TextUI\\Application->run()
 #70 {main}
 "}
+[2026-05-15 05:13:51] testing.ERROR: Command "format" is not defined. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"format\" is not defined. at /app/vendor/symfony/console/Application.php:759)
+[stacktrace]
+#0 /app/vendor/symfony/console/Application.php(298): Symfony\\Component\\Console\\Application->find()
+#1 /app/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun()
+#2 /app/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#3 /app/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate\\Foundation\\Console\\Kernel->handle()
+#4 /app/artisan(16): Illuminate\\Foundation\\Application->handleCommand()
+#5 {main}
+"}
