@@ -25,3 +25,5 @@ composer.phar
 # OS generated files
 .DS_Store
 Thumbs.db
+.phpunit.result.cache
+database/database.sqlite
