@@ -12,4 +12,8 @@ class Article extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    protected $casts = [
+        'published_at' => 'datetime',
+    ];
 }
