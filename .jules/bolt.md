@@ -5,3 +5,7 @@
 ## 2024-05-15 - Missing Cache on Single Model Fetches
 **Learning:** In read-heavy scenarios where the main page fetches articles from cache, the individual read views (e.g., `show()`) might still be hitting the database directly (`Article::findOrFail($id)`).
 **Action:** When working on read-heavy models (like articles or blog posts), always cache the single model fetch using `Cache::remember("key_{$id}", ...)` and ensure the background command/job responsible for syncing the data correctly invalidates the specific key using `$model->wasChanged()` to clear `Cache::forget("key_{$id}")`.
+
+## 2026-06-08 - Missing Database Index on Frequently Checked Field
+**Learning:** The `Article::updateOrCreate(['url' => $item['url']], ...)` call in `FetchNewsCommand` lacked a database index on the `url` column, resulting in potential full table scans and performance degradation as the `articles` table grows over time.
+**Action:** Always verify that fields used in lookup operations like `updateOrCreate` or `firstOrCreate` within loops and background jobs are properly indexed.
