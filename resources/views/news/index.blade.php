@@ -36,7 +36,7 @@
     <!-- Pagination -->
     @if($articles->hasPages())
         <div class="pagination">
-            {{ $articles->withQueryString()->links('pagination::bootstrap-4') }}
+            {{ $articles->withQueryString()->links('pagination::simple-bootstrap-4') }}
         </div>
     @endif
 </div>
