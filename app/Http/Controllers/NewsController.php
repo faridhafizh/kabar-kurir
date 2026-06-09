@@ -36,7 +36,8 @@ class NewsController extends Controller
                 ->orWhere('description', 'like', "%{$search}%");
         }
 
-        $articles = $query->paginate(10);
+        // ⚡ Bolt Optimization: Use simplePaginate instead of paginate to eliminate the expensive COUNT(*) query on the large articles table, significantly speeding up the index view.
+        $articles = $query->simplePaginate(10);
 
         return view('news.index', compact('articles'));
     }

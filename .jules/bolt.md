@@ -5,3 +5,7 @@
 ## 2024-05-15 - Missing Cache on Single Model Fetches
 **Learning:** In read-heavy scenarios where the main page fetches articles from cache, the individual read views (e.g., `show()`) might still be hitting the database directly (`Article::findOrFail($id)`).
 **Action:** When working on read-heavy models (like articles or blog posts), always cache the single model fetch using `Cache::remember("key_{$id}", ...)` and ensure the background command/job responsible for syncing the data correctly invalidates the specific key using `$model->wasChanged()` to clear `Cache::forget("key_{$id}")`.
+
+## 2026-06-09 - [Fixing 500 Error on Model Attributes]
+**Learning:** In Laravel, model attributes retrieved from the database that represent dates (like `published_at`) need to be explicitly cast to `datetime` in the model definition to prevent errors when trying to use Carbon methods (like `diffForHumans()`) on them in views.
+**Action:** Always ensure that timestamp or date columns are correctly cast in the model to avoid runtime errors in views.
