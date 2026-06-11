@@ -9,3 +9,7 @@
 ## 2026-06-09 - [Fixing 500 Error on Model Attributes]
 **Learning:** In Laravel, model attributes retrieved from the database that represent dates (like `published_at`) need to be explicitly cast to `datetime` in the model definition to prevent errors when trying to use Carbon methods (like `diffForHumans()`) on them in views.
 **Action:** Always ensure that timestamp or date columns are correctly cast in the model to avoid runtime errors in views.
+
+## 2026-06-11 - Missing DB Index on Fetch Lookup
+**Learning:** The background task fetching news repeatedly searched for existing articles by URL during its `updateOrCreate` operation. Because the `url` column lacked an index, this caused an O(N) full table scan for every article on every background fetch, silently degrading backend performance as the dataset grew.
+**Action:** When a command or job relies on `updateOrCreate` or `firstOrCreate` with a specific unique key, always ensure a database index is present for that lookup key.
