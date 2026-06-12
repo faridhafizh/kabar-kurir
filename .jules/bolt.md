@@ -9,3 +9,7 @@
 ## 2026-06-09 - [Fixing 500 Error on Model Attributes]
 **Learning:** In Laravel, model attributes retrieved from the database that represent dates (like `published_at`) need to be explicitly cast to `datetime` in the model definition to prevent errors when trying to use Carbon methods (like `diffForHumans()`) on them in views.
 **Action:** Always ensure that timestamp or date columns are correctly cast in the model to avoid runtime errors in views.
+
+## 2026-06-12 - Missing Database Index on updateOrCreate Match Criteria
+**Learning:** When using Eloquent's `updateOrCreate()` (or `firstOrCreate()`), the fields in the first array (the match criteria) are queried for every iteration. If these fields are not indexed, it causes a full table scan for each item processed, which severely degrades performance during batch operations like fetching/syncing data.
+**Action:** Always ensure that columns used as the match condition in `updateOrCreate()` or `firstOrCreate()` have a database index to maintain fast lookup times during bulk operations.
