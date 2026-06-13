@@ -15,34 +15,48 @@ class TrackingController extends Controller
         ]);
 
         $resi = strtoupper($request->resi);
+        $cacheKey = "tracking_{$resi}";
 
-        // Cache result for 10 minutes to avoid hitting BinderByte rate limits
-        $data = Cache::remember("tracking_{$resi}", 600, function () use ($resi) {
-            $apiKey = env('BINDERBYTE_API_KEY');
+        // ⚡ Bolt Optimization: Manually check cache to enable "Negative Caching".
+        // Cache::remember throws an exception on invalid resi, bypassing the cache.
+        // We cache the error response to prevent rate-limit exhaustion from repeated invalid requests.
+        $cachedData = Cache::get($cacheKey);
 
-            if (empty($apiKey)) {
-                throw new \Exception('BinderByte API key is not configured.');
+        if ($cachedData !== null) {
+            if (isset($cachedData['error'])) {
+                return response()->json(['message' => $cachedData['error']], 400);
             }
 
-            $response = Http::withOptions(['verify' => false])->timeout(12)->get('https://api.binderbyte.com/v1/track', [
-                'api_key' => $apiKey,
-                'courier' => 'spx',
-                'awb' => $resi,
-            ]);
+            return response()->json($cachedData);
+        }
 
-            if ($response->failed()) {
-                throw new \Exception('Gagal menghubungi server pelacakan.');
-            }
+        $apiKey = env('BINDERBYTE_API_KEY');
 
-            $json = $response->json();
+        if (empty($apiKey)) {
+            return response()->json(['message' => 'BinderByte API key is not configured.'], 500);
+        }
 
-            if (! isset($json['status']) || $json['status'] !== 200) {
-                throw new \Exception($json['message'] ?? 'Resi tidak ditemukan.');
-            }
+        $response = Http::withOptions(['verify' => false])->timeout(12)->get('https://api.binderbyte.com/v1/track', [
+            'api_key' => $apiKey,
+            'courier' => 'spx',
+            'awb' => $resi,
+        ]);
 
-            return $json['data'];
-        });
+        if ($response->failed()) {
+            return response()->json(['message' => 'Gagal menghubungi server pelacakan.'], 500);
+        }
 
-        return response()->json($data);
+        $json = $response->json();
+
+        if (! isset($json['status']) || $json['status'] !== 200) {
+            $errorMessage = $json['message'] ?? 'Resi tidak ditemukan.';
+            Cache::put($cacheKey, ['error' => $errorMessage], 600);
+
+            return response()->json(['message' => $errorMessage], 400);
+        }
+
+        Cache::put($cacheKey, $json['data'], 600);
+
+        return response()->json($json['data']);
     }
 }
