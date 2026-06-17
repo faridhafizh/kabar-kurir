@@ -9,3 +9,7 @@
 ## 2026-06-09 - [Fixing 500 Error on Model Attributes]
 **Learning:** In Laravel, model attributes retrieved from the database that represent dates (like `published_at`) need to be explicitly cast to `datetime` in the model definition to prevent errors when trying to use Carbon methods (like `diffForHumans()`) on them in views.
 **Action:** Always ensure that timestamp or date columns are correctly cast in the model to avoid runtime errors in views.
+
+## 2024-06-17 - Negative Caching on External APIs
+**Learning:** In the `TrackingController`, invalid queries (like checking a non-existent tracking number) or errors hitting the external BinderByte API previously threw exceptions. Because `Cache::remember()` only caches successful returns from the closure and skips caching if an exception is thrown, malicious users or repeated invalid inputs could continuously hammer the external API, rapidly exhausting rate limits.
+**Action:** When caching external API calls or operations with rate limits, always implement "negative caching". Ditch `Cache::remember()` for a manual `Cache::get()` and `Cache::put()` pattern. Catch exceptions or error states, explicitly cache those error states for a short duration, and serve them to prevent repeated outgoing invalid requests.
