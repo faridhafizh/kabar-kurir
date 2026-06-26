@@ -16,8 +16,22 @@ class TrackingController extends Controller
 
         $resi = strtoupper($request->resi);
 
-        // Cache result for 10 minutes to avoid hitting BinderByte rate limits
-        $data = Cache::remember("tracking_{$resi}", 600, function () use ($resi) {
+        // ⚡ Bolt Optimization: Implement Negative Caching
+        // Avoid using Cache::remember when exceptions are thrown for expected invalid requests.
+        // Caching both successes and errors (negative caching) prevents rate-limit exhaustion.
+        $cacheKey = "tracking_{$resi}_v2";
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            if (isset($cached['error'])) {
+                // Re-throw to maintain consistency with Laravel's exception handler
+                throw new \Exception($cached['error']);
+            }
+
+            return response()->json($cached['data']);
+        }
+
+        try {
             $apiKey = env('BINDERBYTE_API_KEY');
 
             if (empty($apiKey)) {
@@ -40,9 +54,15 @@ class TrackingController extends Controller
                 throw new \Exception($json['message'] ?? 'Resi tidak ditemukan.');
             }
 
-            return $json['data'];
-        });
+            $data = $json['data'];
+            // Cache successful result for 10 minutes
+            Cache::put($cacheKey, ['data' => $data], 600);
 
-        return response()->json($data);
+            return response()->json($data);
+        } catch (\Exception $e) {
+            // Cache error result for 10 minutes (Negative Caching)
+            Cache::put($cacheKey, ['error' => $e->getMessage()], 600);
+            throw $e;
+        }
     }
 }
