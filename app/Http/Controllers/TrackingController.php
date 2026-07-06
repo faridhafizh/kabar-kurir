@@ -16,32 +16,50 @@ class TrackingController extends Controller
 
         $resi = strtoupper($request->resi);
 
-        // Cache result for 10 minutes to avoid hitting BinderByte rate limits
-        $data = Cache::remember("tracking_{$resi}", 600, function () use ($resi) {
-            $apiKey = env('BINDERBYTE_API_KEY');
+        $cacheKey = "tracking_v2_{$resi}";
+        $cached = Cache::get($cacheKey);
 
-            if (empty($apiKey)) {
-                throw new \Exception('BinderByte API key is not configured.');
+        if ($cached !== null) {
+            if (isset($cached['error'])) {
+                throw new \Exception($cached['error']);
             }
+            $data = $cached['data'];
+        } else {
+            try {
+                $apiKey = env('BINDERBYTE_API_KEY');
 
-            $response = Http::withOptions(['verify' => false])->timeout(12)->get('https://api.binderbyte.com/v1/track', [
-                'api_key' => $apiKey,
-                'courier' => 'spx',
-                'awb' => $resi,
-            ]);
+                if (empty($apiKey)) {
+                    throw new \Exception('BinderByte API key is not configured.');
+                }
 
-            if ($response->failed()) {
-                throw new \Exception('Gagal menghubungi server pelacakan.');
+                $response = Http::withOptions(['verify' => false])->timeout(12)->get('https://api.binderbyte.com/v1/track', [
+                    'api_key' => $apiKey,
+                    'courier' => 'spx',
+                    'awb' => $resi,
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception('Gagal menghubungi server pelacakan.');
+                }
+
+                $json = $response->json();
+
+                if (! isset($json['status']) || $json['status'] !== 200) {
+                    throw new \Exception($json['message'] ?? 'Resi tidak ditemukan.');
+                }
+
+                $data = $json['data'];
+
+                // ⚡ Bolt Optimization: Cache successful result for 10 minutes
+                Cache::put($cacheKey, ['data' => $data], 600);
+
+            } catch (\Exception $e) {
+                // ⚡ Bolt Optimization: Negative caching - Cache errors for 10 minutes
+                // to prevent rate-limit exhaustion from repeated invalid requests
+                Cache::put($cacheKey, ['error' => $e->getMessage()], 600);
+                throw $e;
             }
-
-            $json = $response->json();
-
-            if (! isset($json['status']) || $json['status'] !== 200) {
-                throw new \Exception($json['message'] ?? 'Resi tidak ditemukan.');
-            }
-
-            return $json['data'];
-        });
+        }
 
         return response()->json($data);
     }
